@@ -103,7 +103,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include;$(SolutionDir)Simulations</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
     </ClCompile>
@@ -131,7 +131,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NOMINMAX;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include;$(SolutionDir)Simulations</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -164,7 +164,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
     </ClCompile>
@@ -196,7 +196,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NOMINMAX;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)DirectXTK/Inc;$(SolutionDir)DXUT11/Core;$(SolutionDir)DXUT11/Optional;$(SolutionDir)Effects11/inc;$(SolutionDir)AntTweakBar/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -224,13 +224,17 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MassSpringSystemSimulator.cpp" />
+    <ClCompile Include="RigidBodySystemSimulator.cpp" />
     <ClCompile Include="TemplateSimulator.cpp" />
     <ClCompile Include="util\FFmpeg.cpp" />
     <ClCompile Include="util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="collisionDetect.h" />
     <ClInclude Include="DrawingUtilitiesClass.h" />
     <ClInclude Include="MassSpringSystemSimulator.h" />
+    <ClInclude Include="RigidBodySystemSimulator.h" />
     <ClInclude Include="Simulator.h" />
     <ClInclude Include="TemplateSimulator.h" />
     <ClInclude Include="util\FFmpeg.h" />
