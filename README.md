@@ -14,6 +14,11 @@ Mass spring system
 
 ## Exercies 2
 
+Rigid body sytem
+
 ## Exercise 3
 
+SPH system
+
 ## Exercise 4
+

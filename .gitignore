@@ -37,5 +37,9 @@
 [Dd]ebug/
 [Rr]elease/
 
+*.iobj
+*.ipdb
+
 # 
 exsheets/*
+pics/*
