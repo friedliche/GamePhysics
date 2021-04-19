@@ -3,7 +3,7 @@
 MassSpringSystemSimulator::MassSpringSystemSimulator()
 {
 	m_iTestCase = 0;
-	m_gravityForce = Vec3(0.f, -50.f, 0.f);
+	m_gravityForce = Vec3(0.f, -30.f, 0.f);
 	setIntegrator(EULER);
 }
 
@@ -233,6 +233,20 @@ void MassSpringSystemSimulator::applyDamping(MassPoint & massPoint)
 	massPoint.force -= this->m_fDamping * massPoint.velocity;
 }
 
+void MassSpringSystemSimulator::handleBoundariesHits(MassPoint & massPoint)
+{
+	if (massPoint.position.y <= -0.5f) {
+		massPoint.position.y = -0.5f;
+		massPoint.velocity.y *= -0.6f;
+	}
+	
+	if (massPoint.position.x >= 0.5f || massPoint.position.x <= -0.5f) {
+		massPoint.position.x = (massPoint.position.x >= 0.5f? 0.5f : -0.5f);
+		massPoint.velocity.x *= -0.6f;
+	}
+
+}
+
 const char * MassSpringSystemSimulator::getIntegratorStr()
 {
 	return "Euler,Leapfrog,Midpoint";
@@ -246,6 +260,7 @@ void MassSpringSystemSimulator::integrateEuler(float timeStep)
 
 		if (!massPoint.isFixed) {
 			massPoint.integratePosition(timeStep);
+			handleBoundariesHits(massPoint);
 			massPoint.integrateVelocity(timeStep, this->m_fMass);
 		}
 	});
@@ -275,6 +290,7 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep)
 		applyDamping(massPoint);
 
 		if (!massPoint.isFixed) {
+			handleBoundariesHits(this->m_massPoints[i]);
 			this->m_massPoints[i].velocity += timeStep * massPoint.force / this->m_fMass;
 		}
 	}
@@ -289,6 +305,7 @@ void MassSpringSystemSimulator::integrateLeapFrog(float timeStep)
 		if (!massPoint.isFixed) {
 			massPoint.integrateVelocity(timeStep, this->m_fMass);
 			massPoint.integratePosition(timeStep);
+			handleBoundariesHits(massPoint);
 		}
 	});
 }
@@ -316,44 +333,44 @@ void MassSpringSystemSimulator::complexSimulationSetup()
 	this->resetScene();
 
 	setMass(10.f);
-	setStiffness(200.f);
+	setStiffness(150.f);
 	setDampingFactor(5.f);
 
 	//first option: one mass and one spring
 	int p1 = addMassPoint(Vec3(-0.25f, 0.25f, 0), Vec3(0, 0, 0), FALSE);
 	int p2 = addMassPoint(Vec3(-0.25f, 0.5f, 0), Vec3(0.7f, 0, 0), TRUE);
 	//the first and second point in m_points
-	addSpring(p1, p2, 0.01f);
+	addSpring(p1, p2, 0.1f);
 
 	//second option: two masses and two springs
-	int p3 = addMassPoint(Vec3(0.25f, 0.498f, 0), Vec3(-0.2, 0, 0), FALSE);
-	int p4 = addMassPoint(Vec3(0.25f, 0.499f, 0), Vec3(0.1, 0, 0), FALSE);
-	addSpring(p3, p4, 0.001f);
+	int p3 = addMassPoint(Vec3(0.3f, 0.498f, 0), Vec3(-0.2, 0, 0), FALSE);
+	int p4 = addMassPoint(Vec3(0.3f, 0.499f, 0), Vec3(0.1, 0, 0), FALSE);
+	addSpring(p3, p4, 0.1f);
 	//"ceil"
-	int p5 = addMassPoint(Vec3(0.5f, 0.5f, 0), Vec3(0, 0, 0), TRUE);
-	addSpring(p4, p5, 0.001f);
+	int p5 = addMassPoint(Vec3(0.4f, 0.5f, 0), Vec3(0, 0, 0), TRUE);
+	addSpring(p4, p5, 0.1f);
 
 	//third option: a pyramid
-	addMassPoint(Vec3(0.f, -0.3f, 0), Vec3(-0.5f, 0, 0), FALSE);
-	addMassPoint(Vec3(-0.1f, -0.4f, 0), Vec3(0.1f, 0, 0), FALSE);
-	addMassPoint(Vec3(0.f, -0.4f, 0), Vec3(-0.1f, 0, 0), FALSE);
-	addMassPoint(Vec3(0.1f, -0.4f, 0), Vec3(0.5f, 0, 0), FALSE);
-	addMassPoint(Vec3(0.f, -0.5f, 0), Vec3(-0.1f, 0, 0), FALSE);
-	addSpring(5, 6, 0.01f);
-	addSpring(5, 7, 0.01f);
-	addSpring(5, 8, 0.01f);
-	addSpring(5, 9, 0.02f);
-	addSpring(6, 7, 0.01f);
-	addSpring(6, 8, 0.02f);
-	addSpring(6, 9, 0.01f);
-	addSpring(7, 8, 0.01f);
-	addSpring(7, 9, 0.01f);
-	addSpring(8, 9, 0.01f);
+	addMassPoint(Vec3(-0.1f, -0.2f, 0), Vec3(), FALSE);
+	addMassPoint(Vec3(-0.1f, -0.4f, -0.25f), Vec3(), FALSE);
+	addMassPoint(Vec3(0.f, -0.4f, 0.0f), Vec3(), FALSE);
+	addMassPoint(Vec3(-0.1f, -0.4f, 0.25f), Vec3(), FALSE);
+	addMassPoint(Vec3(-0.2f, -0.4f, 0), Vec3(), FALSE);
+	addSpring(5, 6, 0.2f);
+	addSpring(5, 7, 0.2f);
+	addSpring(5, 8, 0.2f);
+	addSpring(5, 9, 0.2f);
+	addSpring(6, 7, 0.2f);
+	addSpring(6, 8, 0.2f);
+	addSpring(6, 9, 0.2f);
+	addSpring(7, 8, 0.2f);
+	addSpring(7, 9, 0.2f);
+	addSpring(8, 9, 0.2f);
 
 	//fourth option: one mass and one spring (vertical)
 	addMassPoint(Vec3(0, 0.25f, 0), Vec3(0, 0, 0), FALSE);
 	addMassPoint(Vec3(0, 0.5f, 0), Vec3(0.7, 0, 0), TRUE);
-	addSpring(10, 11, 0.25f);
+	addSpring(10, 11, 0.1f);
 
 	this->m_sphereSize = 0.02*Vec3(1, 1, 1);
 	this->m_springColor1 = Vec3(1, 1, 0);

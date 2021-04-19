@@ -70,6 +70,7 @@ public:
 	void applyExternalForce(Vec3 force);
 	void applyInternalForce(float timeStep, std::vector<MassPoint>& massPoints);
 	void applyDamping(MassPoint & massPoint);
+	void handleBoundariesHits(MassPoint & massPoint);
 	
 	// Integration methods
 	const char * getIntegratorStr();
