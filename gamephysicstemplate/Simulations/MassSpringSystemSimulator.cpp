@@ -3,7 +3,7 @@
 MassSpringSystemSimulator::MassSpringSystemSimulator()
 {
 	m_iTestCase = 0;
-	m_gravityForce = Vec3(0.f, -9.81f, 0.f);
+	m_gravityForce = Vec3(0.f, -50.f, 0.f);
 	setIntegrator(EULER);
 }
 
@@ -116,7 +116,9 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
-	//update current setup for each frame
+	applyExternalForce(m_gravityForce);
+	applyInternalForce(timeStep, this->m_massPoints);
+
 	switch (m_iIntegrator) {
 	case EULER:
 		integrateEuler(timeStep);
@@ -125,7 +127,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 		integrateLeapFrog(timeStep);
 		break;
 	case MIDPOINT:
-		//integrateMidpoint(timeStep);
+		integrateMidpoint(timeStep);
 		break;
 	default:
 		cout << "shouldn't be here";
@@ -213,17 +215,17 @@ void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
 	});
 }
 
-void MassSpringSystemSimulator::applyInternalForce(float timeStep)
+void MassSpringSystemSimulator::applyInternalForce(float timeStep, std::vector<MassPoint> &massPoints)
 {
-	std::for_each(std::begin(this->m_springs), std::end(this->m_springs), [this, timeStep](Spring& spring) {
+	std::for_each(std::begin(this->m_springs), std::end(this->m_springs), [timeStep, &massPoints](Spring& spring) {
 
-		Vec3 pos1 = this->m_massPoints[spring.point1].position;
-		Vec3 pos2 = this->m_massPoints[spring.point2].position;
+		Vec3 pos1 = massPoints[spring.point1].position;
+		Vec3 pos2 = massPoints[spring.point2].position;
 
 		std::vector<Vec3> intForces = spring.computeElasticForces(pos1, pos2);
 		
-		this->m_massPoints[spring.point1].force -= intForces[0];
-		this->m_massPoints[spring.point2].force -= intForces[1];
+		massPoints[spring.point1].force -= intForces[0];
+		massPoints[spring.point2].force -= intForces[1];
 	});
 }
 
@@ -239,10 +241,6 @@ const char * MassSpringSystemSimulator::getIntegratorStr()
 
 void MassSpringSystemSimulator::integrateEuler(float timeStep)
 {
-	applyExternalForce(m_gravityForce);
-
-	applyInternalForce(timeStep);
-
 	std::for_each(std::begin(this->m_massPoints), std::end(this->m_massPoints), [this, timeStep](MassPoint& massPoint) {
 	
 		applyDamping(massPoint);
@@ -251,16 +249,40 @@ void MassSpringSystemSimulator::integrateEuler(float timeStep)
 			massPoint.integratePosition(timeStep);
 			massPoint.integrateVelocity(timeStep);
 		}
-
 	});
+}
+
+void MassSpringSystemSimulator::integrateMidpoint(float timeStep)
+{
+	std::vector<MassPoint> tmpPoints = this->m_massPoints;
+
+	for (int i = 0; i < tmpPoints.size(); ++i) {
+		MassPoint massPoint = tmpPoints[i];
+		applyDamping(massPoint);
+
+		if (!massPoint.isFixed){
+			massPoint.integratePosition(timeStep / 2);
+			massPoint.integrateVelocity(timeStep / 2);
+
+			this->m_massPoints[i].position += timeStep * tmpPoints[i].velocity;
+		}
+	}
+
+	applyExternalForce(m_gravityForce);
+	applyInternalForce(timeStep, tmpPoints);
+
+	for (int i = 0; i < tmpPoints.size(); ++i) {
+		MassPoint massPoint = tmpPoints[i];
+		applyDamping(massPoint);
+
+		if (!massPoint.isFixed) {
+			this->m_massPoints[i].velocity += timeStep * massPoint.force / massPoint.mass;
+		}
+	}
 }
 
 void MassSpringSystemSimulator::integrateLeapFrog(float timeStep)
 {
-	applyExternalForce(m_gravityForce);
-
-	applyInternalForce(timeStep);
-
 	std::for_each(std::begin(this->m_massPoints), std::end(this->m_massPoints), [this, timeStep](MassPoint& massPoint) {
 
 		applyDamping(massPoint);
@@ -269,7 +291,6 @@ void MassSpringSystemSimulator::integrateLeapFrog(float timeStep)
 			massPoint.integrateVelocity(timeStep);
 			massPoint.integratePosition(timeStep);
 		}
-
 	});
 }
 

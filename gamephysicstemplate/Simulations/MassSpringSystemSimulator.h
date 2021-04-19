@@ -68,7 +68,7 @@ public:
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
-	void applyInternalForce(float timeStep);
+	void applyInternalForce(float timeStep, std::vector<MassPoint>& massPoints);
 	void applyDamping(MassPoint & massPoint);
 	
 	// Integration methods
