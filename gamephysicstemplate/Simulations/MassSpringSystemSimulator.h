@@ -13,23 +13,23 @@
 struct MassPoint {
 	Vec3 position, velocity, force;
 	Vec3 positionFin;
-	float mass, damping;
+	float damping;
 	bool isFixed;
 
 	void integratePosition(float timeStep) {
 		position += timeStep * velocity;
 	}
-	void integrateVelocity(float timeStep) {
+	void integrateVelocity(float timeStep, float mass) {
 		velocity += timeStep * force/mass;
 	}
 };
 
 struct Spring {
 	int point1, point2;
-	float stiffness, initialLength;
+	float initialLength;
 
 	// computes internal force for point1 and point2 resulting from this spring
-	std::vector<Vec3> computeElasticForces(Vec3 posPoint1, Vec3 posPoint2) {
+	std::vector<Vec3> computeElasticForces(Vec3 posPoint1, Vec3 posPoint2, float stiffness) {
 		float currentLength = norm(posPoint2 - posPoint1);
 		float tmp = stiffness * (currentLength - initialLength);
 

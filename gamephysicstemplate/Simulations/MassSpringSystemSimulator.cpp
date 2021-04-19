@@ -85,6 +85,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 		cout << "Empty Scenario\n";
 		break;
 	}
+	this->m_iTestCase = testCase;
 }
 
 void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
@@ -171,7 +172,6 @@ int MassSpringSystemSimulator::addMassPoint(Vec3 position, Vec3 velocity, bool i
 	newMassPoint.positionFin = Vec3();
 	newMassPoint.velocity = velocity;
 	newMassPoint.isFixed = isFixed;
-	newMassPoint.mass = m_fMass;
 	newMassPoint.damping = m_fDamping;
 	this->m_massPoints.push_back(newMassPoint);
 	return m_iNumberOfMassPoints++;
@@ -183,7 +183,6 @@ void MassSpringSystemSimulator::addSpring(int masspoint1, int masspoint2, float 
 	newSpring.point1 = masspoint1;
 	newSpring.point2 = masspoint2;
 	newSpring.initialLength = initialLength;
-	newSpring.stiffness = m_fStiffness;
 	++m_iNumberOfSprings;
 	m_springs.push_back(newSpring);
 }
@@ -217,12 +216,12 @@ void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
 
 void MassSpringSystemSimulator::applyInternalForce(float timeStep, std::vector<MassPoint> &massPoints)
 {
-	std::for_each(std::begin(this->m_springs), std::end(this->m_springs), [timeStep, &massPoints](Spring& spring) {
+	std::for_each(std::begin(this->m_springs), std::end(this->m_springs), [this, timeStep, &massPoints](Spring& spring) {
 
 		Vec3 pos1 = massPoints[spring.point1].position;
 		Vec3 pos2 = massPoints[spring.point2].position;
 
-		std::vector<Vec3> intForces = spring.computeElasticForces(pos1, pos2);
+		std::vector<Vec3> intForces = spring.computeElasticForces(pos1, pos2, this->m_fStiffness);
 		
 		massPoints[spring.point1].force -= intForces[0];
 		massPoints[spring.point2].force -= intForces[1];
@@ -247,7 +246,7 @@ void MassSpringSystemSimulator::integrateEuler(float timeStep)
 
 		if (!massPoint.isFixed) {
 			massPoint.integratePosition(timeStep);
-			massPoint.integrateVelocity(timeStep);
+			massPoint.integrateVelocity(timeStep, this->m_fMass);
 		}
 	});
 }
@@ -262,7 +261,7 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep)
 
 		if (!massPoint.isFixed){
 			massPoint.integratePosition(timeStep / 2);
-			massPoint.integrateVelocity(timeStep / 2);
+			massPoint.integrateVelocity(timeStep / 2, this->m_fMass);
 
 			this->m_massPoints[i].position += timeStep * tmpPoints[i].velocity;
 		}
@@ -276,7 +275,7 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep)
 		applyDamping(massPoint);
 
 		if (!massPoint.isFixed) {
-			this->m_massPoints[i].velocity += timeStep * massPoint.force / massPoint.mass;
+			this->m_massPoints[i].velocity += timeStep * massPoint.force / this->m_fMass;
 		}
 	}
 }
@@ -288,7 +287,7 @@ void MassSpringSystemSimulator::integrateLeapFrog(float timeStep)
 		applyDamping(massPoint);
 
 		if (!massPoint.isFixed) {
-			massPoint.integrateVelocity(timeStep);
+			massPoint.integrateVelocity(timeStep, this->m_fMass);
 			massPoint.integratePosition(timeStep);
 		}
 	});
@@ -298,9 +297,9 @@ void MassSpringSystemSimulator::simpleSimulationSetup()
 {
 	this->resetScene();
 
-	setMass(10);
-	setStiffness(40);
-	setDampingFactor(0);
+	setMass(10.f);
+	setStiffness(40.f);
+	setDampingFactor(0.f);
 
 	int i1 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), false);
 	int i2 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), true);
@@ -316,9 +315,45 @@ void MassSpringSystemSimulator::complexSimulationSetup()
 {
 	this->resetScene();
 
-	setMass(10);
-	setStiffness(40);
-	setDampingFactor(0);
+	setMass(10.f);
+	setStiffness(200.f);
+	setDampingFactor(5.f);
+
+	//first option: one mass and one spring
+	int p1 = addMassPoint(Vec3(-0.25f, 0.25f, 0), Vec3(0, 0, 0), FALSE);
+	int p2 = addMassPoint(Vec3(-0.25f, 0.5f, 0), Vec3(0.7f, 0, 0), TRUE);
+	//the first and second point in m_points
+	addSpring(p1, p2, 0.01f);
+
+	//second option: two masses and two springs
+	int p3 = addMassPoint(Vec3(0.25f, 0.498f, 0), Vec3(-0.2, 0, 0), FALSE);
+	int p4 = addMassPoint(Vec3(0.25f, 0.499f, 0), Vec3(0.1, 0, 0), FALSE);
+	addSpring(p3, p4, 0.001f);
+	//"ceil"
+	int p5 = addMassPoint(Vec3(0.5f, 0.5f, 0), Vec3(0, 0, 0), TRUE);
+	addSpring(p4, p5, 0.001f);
+
+	//third option: a pyramid
+	addMassPoint(Vec3(0.f, -0.3f, 0), Vec3(-0.5f, 0, 0), FALSE);
+	addMassPoint(Vec3(-0.1f, -0.4f, 0), Vec3(0.1f, 0, 0), FALSE);
+	addMassPoint(Vec3(0.f, -0.4f, 0), Vec3(-0.1f, 0, 0), FALSE);
+	addMassPoint(Vec3(0.1f, -0.4f, 0), Vec3(0.5f, 0, 0), FALSE);
+	addMassPoint(Vec3(0.f, -0.5f, 0), Vec3(-0.1f, 0, 0), FALSE);
+	addSpring(5, 6, 0.01f);
+	addSpring(5, 7, 0.01f);
+	addSpring(5, 8, 0.01f);
+	addSpring(5, 9, 0.02f);
+	addSpring(6, 7, 0.01f);
+	addSpring(6, 8, 0.02f);
+	addSpring(6, 9, 0.01f);
+	addSpring(7, 8, 0.01f);
+	addSpring(7, 9, 0.01f);
+	addSpring(8, 9, 0.01f);
+
+	//fourth option: one mass and one spring (vertical)
+	addMassPoint(Vec3(0, 0.25f, 0), Vec3(0, 0, 0), FALSE);
+	addMassPoint(Vec3(0, 0.5f, 0), Vec3(0.7, 0, 0), TRUE);
+	addSpring(10, 11, 0.25f);
 
 	this->m_sphereSize = 0.02*Vec3(1, 1, 1);
 	this->m_springColor1 = Vec3(1, 1, 0);
