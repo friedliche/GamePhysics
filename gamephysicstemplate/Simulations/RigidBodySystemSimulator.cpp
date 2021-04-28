@@ -71,14 +71,19 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
-	////euler integration at page 25
-	//std::vector<Rigidbody> temp = m_pRigidBodySystem->getRigidBodySystem();
-	//for (int i = 0; i < m_pRigidBodySystem->getNumRigidBodies(); i++) {
-	//	m_pRigidBodySystem->setCentralOfMassPosition(i, (temp[i].m_boxCenter + timeStep * temp[i].m_velocity));
-	/*setVelocityOf(i, (temp[i].m_velocity + timeStep * temp[i].m_force / m_pRigidBodySystem->getTotalMass()));
-	setOrientationOf(i, (temp[i].m_orientation + timeStep * Quat(temp[i].m_angularVelocity.x, temp[i].m_angularVelocity.y, temp[i].m_angularVelocity.z, 1.0f)).unit());
-	m_pRigidBodySystem->setAngularVelocity(i, (temp[i].m_angularVelocity + timeStep * (temp[i].inertiaTensor).inverse().transformVector(temp[i].m_torque)));
-	}*/
+	//euler integration at page 25
+	std::vector<Rigidbody> temp = m_pRigidBodySystem->getRigidBodySystem();
+	for (int i = 0; i < m_pRigidBodySystem->getNumRigidBodies(); i++) {
+		m_pRigidBodySystem->setCentralOfMassPosition(i, (temp[i].m_boxCenter + timeStep * temp[i].m_velocity));
+		setVelocityOf(i, (temp[i].m_velocity + timeStep * temp[i].m_force / m_pRigidBodySystem->getTotalMass()));
+		setOrientationOf(i, (temp[i].m_orientation + timeStep * Quat(temp[i].m_angularVelocity.x, temp[i].m_angularVelocity.y, temp[i].m_angularVelocity.z, 1.0f)).unit());
+
+		Mat4 ten = m_pRigidBodySystem->getRotMatOf(i);
+		ten.transpose();
+
+		Mat4 in = m_pRigidBodySystem->getRotMatOf(i) * temp[i].inertiaTensor * ten;
+		m_pRigidBodySystem->setAngularVelocity(i, (temp[i].m_angularVelocity + timeStep * ((temp[i].inertiaTensor).transformVector(temp[i].m_torque))));
+	}
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
