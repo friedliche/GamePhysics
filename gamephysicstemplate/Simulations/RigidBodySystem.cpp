@@ -81,7 +81,13 @@ int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass)
 	rigid.m_angularMomentum = Vec3(.0f);
 
 	//angular velocity w
-	rigid.m_angularVelocity = Vec3(.0f);
+	rigid.m_angularVelocity = rigid.inertiaTensor.transformVector(rigid.m_angularMomentum);
+
+	//set xi and fi for torques
+	TorqueChar c;
+	c.xi = Vec3(0.3f, 0.5f, 0.25f);
+	c.fi = Vec3(1.0f, 1.0f, .0f);
+	rigid.m_pointsTorque.push_back(c);
 
 	m_rigidbodySystem.push_back(rigid);
 
@@ -105,6 +111,21 @@ Mat4 RigidBodySystem::getScaleMatOf(int i)
 	Mat4 temp;
 	temp.initScaling(this->m_rigidbodySystem[i].m_boxSize.x, m_rigidbodySystem[i].m_boxSize.y, m_rigidbodySystem[i].m_boxSize.z);
 	return temp;
+}
+
+Vec3 RigidBodySystem::getXiOf(int i, int j)
+{
+	return m_rigidbodySystem[i].m_pointsTorque[j].xi;
+}
+
+void RigidBodySystem::reset()
+{
+	while (!m_rigidbodySystem.empty()) {
+		m_rigidbodySystem.pop_back();
+	}
+
+	m_iNumRigidBodies = 0;
+	m_fTotalMass = 0;
 }
 
 Mat4 RigidBodySystem::calcTransformMatrixOf(int i)

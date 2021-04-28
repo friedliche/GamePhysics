@@ -46,6 +46,9 @@ public:
 	Mat4 getRotMatOf(int i);
 	Mat4 getScaleMatOf(int i);
 	Mat4 calcTransformMatrixOf(int i);
+	Vec3 getXiOf(int i, int j);
+
+	void reset();
 
 private:
 	//Attributes
