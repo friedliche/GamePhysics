@@ -53,6 +53,8 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateCont
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
+	m_iTestCase = testCase;
+
 	switch (testCase) {
 	case 0: 
 		cout << "------------------------demo1 case------------------------\n";
@@ -122,7 +124,6 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 				CollisionInfo simpletest = checkCollisionSAT(AM, BM);
 
 				if (simpletest.isValid) {
-					std::printf("Collision\n");
 					//auf welcher flaeche welches koerpers steht die normale?
 					//wenn n positiv, dann steht es auf B, sonst auf A
 
