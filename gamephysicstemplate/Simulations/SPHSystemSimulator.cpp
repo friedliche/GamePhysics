@@ -16,7 +16,7 @@ SPHSystemSimulator::SPHSystemSimulator()
 	m_iTestCase = 0; //fangen mit demo1 an
 	m_iAccelerator = NAIVEACC;
 	m_fMass = 10.0f;
-	m_fRadius = 0.2f;
+	m_fRadius = 0.05f;
 	m_fForceScaling = 0.0f;
 	m_fDamping = 5.0f;
 	m_pSphereSystem = new SphereSystem();
@@ -46,7 +46,8 @@ void SPHSystemSimulator::initUI(DrawingUtilitiesClass * DUC)
 	case 0:
 		TwAddVarRW(DUC->g_pTweakBar, "Integration", TW_TYPE_INTEGCASE, &m_iIntegrator, "");
 		TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=5");
-		TwAddVarRW(DUC->g_pTweakBar, "Number", TW_TYPE_INT32, &m_iNumSpheres, "min=1");		TwAddVarRW(DUC->g_pTweakBar, "Radius", TW_TYPE_FLOAT, &m_fRadius, "min=0.2");
+		TwAddVarRW(DUC->g_pTweakBar, "Number", TW_TYPE_INT32, &m_iNumSpheres, "min=1");
+		TwAddVarRW(DUC->g_pTweakBar, "Radius", TW_TYPE_FLOAT, &m_fRadius, "min=0.04, step=0.001");
 		break;
 	case 1:
 		break;
@@ -68,7 +69,7 @@ void SPHSystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateContext)
 		for (int i = 0; i < m_iNumSpheres; i++) {
 
 			DUC->setUpLighting(Vec3(), Vec3(1, 1, 0), 2000.0f, Vec3(1, 0.5f, 0.65f));
-			DUC->drawSphere(tmp[i].position, Vec3(0.05f, 0.05f, 0.05f));
+			DUC->drawSphere(tmp[i].position, m_fRadius* Vec3(1, 1, 1));
 			//TODO: draw grid 
 		}
 		break;
@@ -172,10 +173,7 @@ void SPHSystemSimulator::simulateTimestep(float timeStep)
 	std::vector<Sphere> tmp = m_pSphereSystem->getSpheres();
 	int a = 0;
 
-	//if gravity on, accelerate in -y-direction
-	for (int i = 0; i < m_iNumSpheres; i++) {
-		tmp[i].force = externalForce;
-	}
+	applyExternalForce(externalForce);
 
 	switch (m_iIntegrator) {
 	case MIDPOINT:
@@ -216,7 +214,6 @@ void SPHSystemSimulator::handleBoundariesHits(Sphere  sphere)
 		sphere.position.x = (sphere.position.x >= 0.5f ? 0.5f : -0.5f);
 		sphere.velocity.x *= -0.6f;
 	}
-
 }
 
 void SPHSystemSimulator::onClick(int x, int y)
