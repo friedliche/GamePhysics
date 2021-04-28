@@ -18,7 +18,9 @@ Rigid body sytem
 
 ## Exercise 3
 
-SPH system
+Sphere (SPH) system
 
 ## Exercise 4
+
+Chose a setup you want
 
