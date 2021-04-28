@@ -33,14 +33,18 @@ public:
 	void setOrientationOf(int i, Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 
+
+	void integrateEuler(float timeStep);
+
 	void setupDemo1();
+	void setupDemo2();
 
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	RigidBodySystem * m_pRigidBodySystem; 
 	Vec3 m_externalForce;
-	boolean first, second;
+	int m_icountPrint;
 
 	int m_iTestCase;
 
