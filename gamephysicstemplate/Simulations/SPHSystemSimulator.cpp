@@ -149,7 +149,7 @@ void SPHSystemSimulator::setupDemo1()
 //repulsion forces
 void SPHSystemSimulator::integrateMidpoint(float timeStep)
 {
-	std::vector<Sphere> tmpSpheres = m_pSphereSystem->getSpheres();
+	std::vector<Sphere>& tmpSpheres = m_pSphereSystem->getSpheres();
 
 	for (int i = 0; i < tmpSpheres.size(); ++i) {
 		Sphere sphere = tmpSpheres[i];
@@ -157,7 +157,7 @@ void SPHSystemSimulator::integrateMidpoint(float timeStep)
 		sphere.integratePosition(timeStep / 2); //xTilde		
 		sphere.integrateVelocity(timeStep / 2, this->m_fMass); //velocity at xTilde
 				
-		m_pSphereSystem->setPosition(i, m_pSphereSystem->getSpheres()[i].position + timeStep * sphere.velocity); //new position
+		m_pSphereSystem->getSpheres()[i].position += timeStep * sphere.velocity; //new position
 	}
 
 	applyExternalForce(externalForce); //clear forces
@@ -167,7 +167,7 @@ void SPHSystemSimulator::integrateMidpoint(float timeStep)
 		Sphere sphere = tmpSpheres[i];
 
 		handleBoundariesHits(this->m_pSphereSystem->getSpheres()[i]);
-		this->m_pSphereSystem->setVelocity(i, this->m_pSphereSystem->getSpheres()[i].velocity + timeStep * sphere.force / this->m_fMass);
+		this->m_pSphereSystem->getSpheres()[i].velocity += timeStep * sphere.force / this->m_fMass;
 	}
 }
 

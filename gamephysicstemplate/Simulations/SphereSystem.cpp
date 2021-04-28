@@ -6,7 +6,7 @@ SphereSystem::SphereSystem()
 
 }
 
-std::vector<Sphere> SphereSystem::getSpheres()
+std::vector<Sphere>& SphereSystem::getSpheres()
 {
 	return spheres;
 }
@@ -33,21 +33,6 @@ int SphereSystem::addSphere(Sphere sph)
 {
 	spheres.push_back(sph);
 	return spheres.size();
-}
-
-void SphereSystem::setPosition(int i, Vec3 pos)
-{
-	spheres[i].position = pos;
-}
-
-void SphereSystem::setVelocity(int i, Vec3 vel)
-{
-	spheres[i].velocity = vel;
-}
-
-void SphereSystem::setForce(int i, Vec3 force)
-{
-	spheres[i].force = force;
 }
 
 void SphereSystem::clearScene()

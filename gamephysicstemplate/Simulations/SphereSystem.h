@@ -21,7 +21,7 @@ public:
 	//Constructors
 	SphereSystem();
 	//Functions
-	std::vector<Sphere> getSpheres();
+	std::vector<Sphere>& getSpheres();
 	//add new sphere in next level
 	void addSphereToSystem();
 	int addSphere(Sphere sph);
