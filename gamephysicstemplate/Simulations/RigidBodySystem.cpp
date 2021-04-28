@@ -100,6 +100,8 @@ int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass, int z)
 	c.fi = z * Vec3(1.0f, 1.0f, .0f);
 	rigid.m_pointsTorque.push_back(c);
 
+	z == 1 ? rigid.fixed = false : rigid.fixed = true;
+
 	m_rigidbodySystem.push_back(rigid);
 
 	return this->m_iNumRigidBodies++;

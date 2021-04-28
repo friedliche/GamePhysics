@@ -17,6 +17,7 @@ struct Rigidbody {
 	Vec3 m_boxCenter, m_boxSize, m_velocity, m_angularMomentum, m_angularVelocity, m_torque, m_force;
 	Quat m_orientation;
 	int m_imass;
+	boolean fixed;
 	//hopefully inertia tensor
 	Mat4 inertiaTensor, inert;
 	//mass points producing torques -> m_torque is total torque

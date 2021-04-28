@@ -1,4 +1,5 @@
 #include "RigidBodySystemSimulator.h"
+#include "collisionDetect.h"
 
 float m_fextraForce = 1.0f;
 
@@ -140,7 +141,7 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
 {
 	if (m_iTestCase == 2) {
-		int z = position.x > 0 ? (-1) : 1;
+		int z = position.x > 0 ? 1 : 0;
 		m_pRigidBodySystem->addRigidBody(position, size, mass, z);
 	}
 	else {
@@ -160,7 +161,7 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 
 void RigidBodySystemSimulator::integrateEuler(float timeStep)
 {
-	//euler integration at page 25
+	//euler integration at page 60
 	std::vector<Rigidbody> temp = m_pRigidBodySystem->getRigidBodySystem();
 
 	int num = m_pRigidBodySystem->getNumRigidBodies();
@@ -170,14 +171,20 @@ void RigidBodySystemSimulator::integrateEuler(float timeStep)
 		m_pRigidBodySystem->setCentralOfMassPosition(i, (temp[i].m_boxCenter + timeStep * temp[i].m_velocity));
 		//v linear velocity
 		setVelocityOf(i, (temp[i].m_velocity + timeStep * temp[i].m_force / (m_pRigidBodySystem->getTotalMass())));
-		//r
-		Quat orient = temp[i].m_orientation + (timeStep)* Quat(temp[i].m_angularVelocity.x, temp[i].m_angularVelocity.y, temp[i].m_angularVelocity.z, 1.0f) * temp[i].m_orientation;
-		setOrientationOf(i, (orient.unit()));
+		//r see page 58
+		Quat orient = temp[i].m_orientation + (timeStep / 2)* Quat(temp[i].m_angularVelocity.x, temp[i].m_angularVelocity.y, temp[i].m_angularVelocity.z, 1.0f) * temp[i].m_orientation;		setOrientationOf(i, (orient.unit()));
 
-		//w angular velocity	
-		m_pRigidBodySystem->setAngularVelocity(i, temp[i].m_angularVelocity + timeStep * temp[i].m_torque);
+		//L angular momentum page 56		
+		m_pRigidBodySystem->setAngularMomentum(i, temp[i].m_angularMomentum + timeStep * temp[i].m_torque);
 
-		//L angular momentum -> we do not need it, as we use the second equation
+		//w angular velocity
+		Mat4 tr = m_pRigidBodySystem->getRotMatOf(i);
+		tr.transpose();
+
+		//calculate the inverse inertia tensor
+		temp[i].inertiaTensor = m_pRigidBodySystem->getRotMatOf(i) * temp[i].inertiaTensor * tr;
+
+		m_pRigidBodySystem->setAngularVelocity(i, temp[i].inertiaTensor.transformVector(temp[i].m_angularMomentum));
 
 		if (m_icountPrint > 0) {
 			cout << "linear and angular velocity of the body: " << getAngularVelocityOfRigidBody(i) << ", " << getLinearVelocityOfRigidBody(i) << "\n";
@@ -190,6 +197,8 @@ void RigidBodySystemSimulator::integrateEuler(float timeStep)
 		}
 	}
 	//m_icountPrint != 0 ? --m_icountPrint : m_icountPrint;
+
+
 }
 
 void RigidBodySystemSimulator::setupDemo1()
@@ -214,13 +223,13 @@ void RigidBodySystemSimulator::setupDemo3()
 	this->m_pRigidBodySystem->reset();
 
 	addRigidBody(Vec3(0.5f, 0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.5f), 2);
-	addRigidBody(Vec3(-0.5f, -0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.5f), 3);
+	addRigidBody(Vec3(-0.5f, -0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.8f), 3);
 
 	// set xi and fi for torques		
 	//m_pRigidBodySystem->addTorque(0, Vec3(0.5f, 0.5f, 0.0f), Vec3(-1.0f, -1.0f, .0f));
 	//m_pRigidBodySystem->addTorque(1, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, .0f));
 
-	setOrientationOf(0, Quat(0, 0, M_PI_2));
-	setOrientationOf(1, Quat(0, 0, 0));
+	setOrientationOf(0, Quat(M_PI_2, 0, M_PI_2));
+	setOrientationOf(1, Quat(M_PI_2, M_PI_4, 0));
 }
 
