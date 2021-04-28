@@ -24,6 +24,13 @@ public:
 	std::vector<Sphere> getSpheres();
 	//add new sphere in next level
 	void addSphereToSystem();
+	int addSphere(Sphere sph);
+
+	void setPosition(int i, Vec3 pos);
+	void setVelocity(int i, Vec3 vel);
+	void setForce(int i, Vec3 force);
+
+	void clearScene();
 
 private:
 	//Attributes

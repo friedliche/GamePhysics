@@ -12,8 +12,7 @@ std::function<float(float)> SPHSystemSimulator::m_Kernels[5] = {
 
 SPHSystemSimulator::SPHSystemSimulator()
 {
-	externalForce = Vec3();
-	m_iTestCase = 0; //fangen mit demo1 an
+	m_iTestCase = 0; // start with demo1
 	m_iAccelerator = NAIVEACC;
 	m_fMass = 10.0f;
 	m_fRadius = 0.05f;
@@ -21,7 +20,6 @@ SPHSystemSimulator::SPHSystemSimulator()
 	m_fDamping = 5.0f;
 	m_pSphereSystem = new SphereSystem();
 	m_iKernel = 0;
-	m_iNumSpheres = m_pSphereSystem->getSpheres().size();
 	m_iIntegrator = MIDPOINT; //0 midpoint, 1 leap frog
 }
 
@@ -39,7 +37,6 @@ void SPHSystemSimulator::initUI(DrawingUtilitiesClass * DUC)
 {
 	this->DUC = DUC;
 
-	DUC->update(0.1f);
 	TwType TW_TYPE_INTEGCASE = TwDefineEnumFromString("Integration", getIntegCasesStr());
 	switch (m_iTestCase)
 	{
@@ -59,19 +56,19 @@ void SPHSystemSimulator::initUI(DrawingUtilitiesClass * DUC)
 
 void SPHSystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateContext)
 {
-	std::vector<Sphere> tmp = m_pSphereSystem->getSpheres();
+	DUC->setUpLighting(Vec3(), Vec3(1, 1, 0), 2000.0f, Vec3(1, 0.5f, 0.65f));
+	std::vector<Sphere> tmpSpheres = m_pSphereSystem->getSpheres();
+
+	// draw spheres
+	for (int i = 0; i < tmpSpheres.size(); i++) {
+		DUC->drawSphere(tmpSpheres[i].position, m_fRadius* Vec3(1, 1, 1));
+		//TODO: draw grid 
+	}
 
 	switch (m_iTestCase) {
 	case 1:
 		break;
 	case 0:
-		//Spheres
-		for (int i = 0; i < m_iNumSpheres; i++) {
-
-			DUC->setUpLighting(Vec3(), Vec3(1, 1, 0), 2000.0f, Vec3(1, 0.5f, 0.65f));
-			DUC->drawSphere(tmp[i].position, m_fRadius* Vec3(1, 1, 1));
-			//TODO: draw grid 
-		}
 		break;
 	case 2:
 		//different colours and size of spheres
@@ -95,7 +92,7 @@ void SPHSystemSimulator::notifyCaseChanged(int testCase)
 	{
 	case 0:
 		cout << "Demo 1 !\n";
-
+		setupDemo1();
 		break;
 	case 1:
 		cout << "Demo 2 !\n";
@@ -126,6 +123,29 @@ void SPHSystemSimulator::applyExternalForce(Vec3 force)
 	}
 }
 
+void SPHSystemSimulator::resetScene()
+{
+	this->m_pSphereSystem->clearScene();
+}
+
+void SPHSystemSimulator::setupDemo1()
+{
+	resetScene();
+
+	Sphere s1, s2;
+	s1.position = Vec3(0.0f);
+	s1.velocity = Vec3(1.0f, 1.0f, 0.0f);
+	s1.force = Vec3(0.0f);
+	this->m_pSphereSystem->addSphere(s1);
+
+	s2.position = Vec3(0.0f, -0.5f, 0.0f);
+	s2.velocity = Vec3(0.0f, 0.0f, 0.0f);
+	s2.force = Vec3(0.0f);
+	this->m_pSphereSystem->addSphere(s2);
+	
+	m_iNumSpheres = 2;
+}
+
 //repulsion forces
 void SPHSystemSimulator::integrateMidpoint(float timeStep)
 {
@@ -137,7 +157,7 @@ void SPHSystemSimulator::integrateMidpoint(float timeStep)
 		sphere.integratePosition(timeStep / 2); //xTilde		
 		sphere.integrateVelocity(timeStep / 2, this->m_fMass); //velocity at xTilde
 				
-		m_pSphereSystem->getSpheres()[i].position += timeStep * sphere.velocity; //new position
+		m_pSphereSystem->setPosition(i, m_pSphereSystem->getSpheres()[i].position + timeStep * sphere.velocity); //new position
 	}
 
 	applyExternalForce(externalForce); //clear forces
@@ -147,7 +167,7 @@ void SPHSystemSimulator::integrateMidpoint(float timeStep)
 		Sphere sphere = tmpSpheres[i];
 
 		handleBoundariesHits(this->m_pSphereSystem->getSpheres()[i]);
-		this->m_pSphereSystem->getSpheres()[i].velocity += timeStep * sphere.force / this->m_fMass;
+		this->m_pSphereSystem->setVelocity(i, this->m_pSphereSystem->getSpheres()[i].velocity + timeStep * sphere.force / this->m_fMass);
 	}
 }
 
@@ -189,14 +209,14 @@ void SPHSystemSimulator::simulateTimestep(float timeStep)
 	
 	//TODO: check for collisions
 	for (int i = 0; i < m_iNumSpheres; i++) {
-		for (int j = 0; j < m_iNumSpheres, i != a; j++) {
-			float posDif = norm(tmp[i].position - tmp[a].position);
+		for (int j = 0; j < m_iNumSpheres; j++) {
+			float posDif = norm(tmp[i].position - tmp[j].position);
 			float radQuad = m_fRadius + m_fRadius;
 
 			//collision, naiv approach
 			//compute force for every sphere according to f(d)
-			if (posDif > radQuad) {
-				tmp[j].force = m_iKernel * (1 - posDif / radQuad);
+			if (posDif <= radQuad) {
+				tmp[i].force = m_Kernels[m_iKernel]((posDif / 2 * radQuad));
 			}
 		}
 		a++;

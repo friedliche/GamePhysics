@@ -2,16 +2,7 @@
 
 SphereSystem::SphereSystem()
 {
-	Sphere s1;
-	s1.position = Vec3(0.0f);
-	s1.velocity = Vec3(1.0f, 1.0f, 0.0f);
-	s1.force = Vec3(0.0f);
-	spheres.push_back(s1);
-	Sphere s2;
-	s2.position = Vec3(0.0f, -0.5f, 0.0f);
-	s2.velocity = Vec3(0.0f, 0.0f, 0.0f);
-	s2.force = Vec3(0.0f);
-	spheres.push_back(s2);
+
 
 }
 
@@ -36,4 +27,30 @@ void SphereSystem::addSphereToSystem()
 		zLevel--; xLevel = 5;
 	}
 	spheres.push_back(newSphere);
+}
+
+int SphereSystem::addSphere(Sphere sph)
+{
+	spheres.push_back(sph);
+	return spheres.size();
+}
+
+void SphereSystem::setPosition(int i, Vec3 pos)
+{
+	spheres[i].position = pos;
+}
+
+void SphereSystem::setVelocity(int i, Vec3 vel)
+{
+	spheres[i].velocity = vel;
+}
+
+void SphereSystem::setForce(int i, Vec3 force)
+{
+	spheres[i].force = force;
+}
+
+void SphereSystem::clearScene()
+{
+	spheres.clear();
 }

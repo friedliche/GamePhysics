@@ -38,6 +38,9 @@ public:
 
 	void applyExternalForce(Vec3 force);
 
+	void resetScene();
+	void setupDemo1();
+
 protected:
 	// Attributes
 	Vec3 externalForce;
