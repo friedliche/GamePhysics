@@ -38,6 +38,7 @@ public:
 
 	void setupDemo1();
 	void setupDemo2();
+	void setupDemo3();
 
 private:
 	// Attributes

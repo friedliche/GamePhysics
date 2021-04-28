@@ -41,7 +41,7 @@ public:
 	void setRotation(int i, Quat rot);
 	void setAngularVelocity(int i, Vec3 w);
 	void setAngularMomentum(int i, Vec3 L);
-	int addRigidBody(Vec3 position, Vec3 size, int mass);
+	int addRigidBody(Vec3 position, Vec3 size, int mass, int k = 1);
 
 	Mat4 getTranslatMatOf(int i);
 	Mat4 getRotMatOf(int i);

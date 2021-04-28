@@ -67,7 +67,7 @@ void RigidBodySystem::setAngularMomentum(int i, Vec3 L)
 	this->m_rigidbodySystem[i].m_angularMomentum = L;
 }
 
-int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass)
+int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass, int z)
 {
 	this->m_fTotalMass += mass;
 
@@ -92,12 +92,12 @@ int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass)
 	rigid.m_angularMomentum = Vec3(.0f);
 
 	//angular velocity w
-	rigid.m_angularVelocity = rigid.inert.transformVector(rigid.m_angularMomentum);
+	rigid.m_angularVelocity = Vec3(.0f);
 
 	//set xi and fi for torques
 	TorqueChar c;
-	c.xi = Vec3(0.3f, 0.5f, 0.25f);
-	c.fi = Vec3(1.0f, 1.0f, .0f);
+	c.xi = z * Vec3(0.3f, 0.5f, 0.25f);
+	c.fi = z * Vec3(1.0f, 1.0f, .0f);
 	rigid.m_pointsTorque.push_back(c);
 
 	m_rigidbodySystem.push_back(rigid);

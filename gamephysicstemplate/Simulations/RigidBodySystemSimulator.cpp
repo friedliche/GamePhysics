@@ -56,6 +56,10 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 		cout << "demo 2!\n";
 		setupDemo2();
 		break;
+	case 2:
+		cout << "demo 3!\n";
+		setupDemo3();
+		break;
 	default:
 		cout << "default\n";
 		break;
@@ -135,7 +139,13 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
 {
-	m_pRigidBodySystem->addRigidBody(position, size, mass);
+	if (m_iTestCase == 2) {
+		int z = position.x > 0 ? (-1) : 1;
+		m_pRigidBodySystem->addRigidBody(position, size, mass, z);
+	}
+	else {
+		m_pRigidBodySystem->addRigidBody(position, size, mass);
+	}	
 }
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
@@ -170,9 +180,9 @@ void RigidBodySystemSimulator::integrateEuler(float timeStep)
 		//L angular momentum -> we do not need it, as we use the second equation
 
 		if (m_icountPrint > 0) {
-			cout << "linear and angular velocity of the body: " << getAngularVelocityOfRigidBody(0) << ", " << getLinearVelocityOfRigidBody(0) << "\n";
+			cout << "linear and angular velocity of the body: " << getAngularVelocityOfRigidBody(i) << ", " << getLinearVelocityOfRigidBody(i) << "\n";
 
-			Vec3 point = temp[i].m_boxCenter + m_pRigidBodySystem->getRotMatOf(0).transformVector(Vec3(0.3f, 0.5f, 0.25f));
+			Vec3 point = temp[i].m_boxCenter + m_pRigidBodySystem->getRotMatOf(i).transformVector(Vec3(0.3f, 0.5f, 0.25f));
 			Vec3 vel = temp[i].m_velocity + cross(temp[i].m_angularVelocity, Vec3(0.3f, 0.5f, 0.25f));
 
 			cout << "world space velocity of point (0.3 0.5 0.25) in world space (" << point << "): " << vel << "\n\n";
@@ -196,5 +206,21 @@ void RigidBodySystemSimulator::setupDemo2()
 
 	addRigidBody(Vec3(.0f, .0f, .0f), Vec3(1.0f, 0.6f, 0.5f), 2);
 	setOrientationOf(0, Quat(0, 0, M_PI_2));
+}
+
+// two rigidbodies
+void RigidBodySystemSimulator::setupDemo3()
+{
+	this->m_pRigidBodySystem->reset();
+
+	addRigidBody(Vec3(0.5f, 0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.5f), 2);
+	addRigidBody(Vec3(-0.5f, -0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.5f), 3);
+
+	// set xi and fi for torques		
+	//m_pRigidBodySystem->addTorque(0, Vec3(0.5f, 0.5f, 0.0f), Vec3(-1.0f, -1.0f, .0f));
+	//m_pRigidBodySystem->addTorque(1, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, .0f));
+
+	setOrientationOf(0, Quat(0, 0, M_PI_2));
+	setOrientationOf(1, Quat(0, 0, 0));
 }
 
