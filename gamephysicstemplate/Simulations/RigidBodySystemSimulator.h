@@ -40,6 +40,7 @@ private:
 	// add your RigidBodySystem data members, for e.g.,
 	RigidBodySystem * m_pRigidBodySystem; 
 	Vec3 m_externalForce;
+	boolean first, second;
 
 	int m_iTestCase;
 

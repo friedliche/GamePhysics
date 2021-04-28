@@ -62,6 +62,11 @@ void RigidBodySystem::setAngularVelocity(int i, Vec3 w)
 	m_rigidbodySystem[i].m_angularVelocity = w;
 }
 
+void RigidBodySystem::setAngularMomentum(int i, Vec3 L)
+{
+	this->m_rigidbodySystem[i].m_angularMomentum = L;
+}
+
 int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass)
 {
 	this->m_fTotalMass += mass;
@@ -72,16 +77,22 @@ int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass)
 	rigid.m_imass = mass;
 	
 	//calculate inertia tensor in 3D
-	float Ixx = 1 / 12 * mass *(size.z * size.z + size.x * size.x);
-	float Iyy = 1 / 12 * mass *(size.y * size.y + size.x * size.x);
-	float Izz = 1 / 12 * mass *(size.y * size.y + size.z * size.z);
-	rigid.inertiaTensor = XMMatrixSet(Ixx, .0f, .0f, .0f, .0f, Iyy, .0f, .0f, .0f, .0f, Izz, .0f, .0f, .0f, .0f, 1.0f);
+	float Ixx = mass * (size.z * size.z + size.x * size.x);
+	float Iyy = mass * (size.y * size.y + size.x * size.x);
+	float Izz = mass * (size.y * size.y + size.z * size.z);
+
+	float Ixy = mass * (-size.x*size.y);
+	float Ixz = mass * (-size.x*size.z); //z 2, 1 y, 3 x
+	float Izy = mass * (-size.y*size.z);
+	rigid.inertiaTensor = XMMatrixSet(Ixx, Izy, Ixy, .0f, Izy, Iyy, Ixz, .0f, Ixy, Ixz, Izz, .0f, .0f, .0f, .0f, 1.0f);
+
+	rigid.inert = rigid.inertiaTensor.inverse();
 
 	//angular momantum L
 	rigid.m_angularMomentum = Vec3(.0f);
 
 	//angular velocity w
-	rigid.m_angularVelocity = rigid.inertiaTensor.transformVector(rigid.m_angularMomentum);
+	rigid.m_angularVelocity = rigid.inert.transformVector(rigid.m_angularMomentum);
 
 	//set xi and fi for torques
 	TorqueChar c;
@@ -120,12 +131,9 @@ Vec3 RigidBodySystem::getXiOf(int i, int j)
 
 void RigidBodySystem::reset()
 {
-	while (!m_rigidbodySystem.empty()) {
-		m_rigidbodySystem.pop_back();
-	}
+	this->m_rigidbodySystem.clear();
 
-	m_iNumRigidBodies = 0;
-	m_fTotalMass = 0;
+	m_iNumRigidBodies = m_fTotalMass = 0;
 }
 
 Mat4 RigidBodySystem::calcTransformMatrixOf(int i)
