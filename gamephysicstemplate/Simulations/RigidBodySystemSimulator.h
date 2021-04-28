@@ -39,6 +39,7 @@ public:
 	void setupDemo1();
 	void setupDemo2();
 	void setupDemo3();
+	void setupDemo4();
 
 private:
 	// Attributes

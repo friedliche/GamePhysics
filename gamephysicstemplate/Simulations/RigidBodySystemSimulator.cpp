@@ -2,6 +2,7 @@
 #include "collisionDetect.h"
 
 float m_fextraForce = 1.0f;
+boolean interaction = false;
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
@@ -39,7 +40,11 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateCont
 {
 	int numTemp = m_pRigidBodySystem->getNumRigidBodies();
 
-	DUC->setUpLighting(Vec3(0, 0, 0), Vec3(1, 1, 1), 0.2f, 0.5f*Vec3(1, 1, 1));
+	if (m_iTestCase == 2)
+		DUC->setUpLighting(Vec3(0, 0, 0), Vec3(1, 1, 0), 2000.0f, Vec3(0.8f, 0.2f, 0.5f));
+	else
+		DUC->setUpLighting(Vec3(0, 0, 0), Vec3(1, 0, 1), 1000.0f, Vec3(0.5f, 0.0f, 0.5f));
+
 	for (int i = 0; i < numTemp; i++) {
 		DUC->drawRigidBody(m_pRigidBodySystem->calcTransformMatrixOf(i));
 	}
@@ -60,6 +65,10 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 	case 2:
 		cout << "demo 3!\n";
 		setupDemo3();
+		break;
+	case 3:
+		cout << "demo 4!\n";
+		setupDemo4();
 		break;
 	default:
 		cout << "default\n";
@@ -96,6 +105,54 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
 	integrateEuler(timeStep);
+
+	// use updated values from previous step
+	int num = m_pRigidBodySystem->getNumRigidBodies();
+	std::vector<Rigidbody> temp = m_pRigidBodySystem->getRigidBodySystem();
+
+	//check for collisions
+	if (m_iTestCase >= 2) {
+
+		for (int i = 0; i < num; i++) {
+			for (int j = 0; j < num, i != j; j++) {
+
+				GamePhysics::Mat4 AM = m_pRigidBodySystem->calcTransformMatrixOf(j);
+				GamePhysics::Mat4 BM = m_pRigidBodySystem->calcTransformMatrixOf(i);
+
+				CollisionInfo simpletest = checkCollisionSAT(AM, BM);
+
+				if (simpletest.isValid) {
+					std::printf("Collision\n");
+					//auf welcher flaeche welches koerpers steht die normale?
+					//wenn n positiv, dann steht es auf B, sonst auf A
+
+					if (dot(temp[j].m_velocity - temp[i].m_velocity, simpletest.normalWorld) >= 0)
+						return;
+
+					Vec3 deltaVel = (temp[j].m_velocity - temp[i].m_velocity);
+
+					//calculate impulse J
+					//they should stop flying into each other
+					//bouncies: c=1 fully elasitc c=0 plastic
+					float c = 1;
+					float J = -(1 + c) * dot(deltaVel, simpletest.normalWorld);
+					float nenner;
+					float massterm = 1.0f / temp[j].m_imass + 1.0f / temp[i].m_imass;
+					Vec3 a = (cross(temp[j].inertiaTensor.transformVector(cross(temp[j].m_boxCenter, simpletest.normalWorld)), temp[j].m_boxCenter));
+					Vec3 b = (cross(temp[i].inertiaTensor.transformVector(cross(temp[i].m_boxCenter, simpletest.normalWorld)), temp[i].m_boxCenter));
+					nenner = massterm + (dot((a + b), simpletest.normalWorld));
+					J = J / nenner;
+
+					//velocity update
+					setVelocityOf(j, temp[j].m_velocity + (J * simpletest.normalWorld) / temp[j].m_imass);
+					setVelocityOf(i, temp[i].m_velocity - (J * simpletest.normalWorld) / temp[i].m_imass);
+
+					m_pRigidBodySystem->setAngularMomentum(j, temp[j].m_angularMomentum + (cross(temp[j].m_boxCenter, J*simpletest.normalWorld)));
+					m_pRigidBodySystem->setAngularMomentum(i, temp[i].m_angularMomentum - (cross(temp[i].m_boxCenter, J*simpletest.normalWorld)));
+				}
+			}
+		}
+	}
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -140,13 +197,7 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
 {
-	if (m_iTestCase == 2) {
-		int z = position.x > 0 ? 1 : 0;
-		m_pRigidBodySystem->addRigidBody(position, size, mass, z);
-	}
-	else {
-		m_pRigidBodySystem->addRigidBody(position, size, mass);
-	}	
+	m_pRigidBodySystem->addRigidBody(position, size, mass);		
 }
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
@@ -161,18 +212,30 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 
 void RigidBodySystemSimulator::integrateEuler(float timeStep)
 {
-	//euler integration at page 60
 	std::vector<Rigidbody> temp = m_pRigidBodySystem->getRigidBodySystem();
-
 	int num = m_pRigidBodySystem->getNumRigidBodies();
 
+	//euler integration at page 60
 	for (int i = 0; i < num; i++) {
-		//x
+
+		//x central of mass
 		m_pRigidBodySystem->setCentralOfMassPosition(i, (temp[i].m_boxCenter + timeStep * temp[i].m_velocity));
+		
+		// interaction with walls
+		if (interaction) {
+			if ((m_pRigidBodySystem->getRigidBodySystem()[i].m_boxCenter.x < -0.5f || m_pRigidBodySystem->getRigidBodySystem()[i].m_boxCenter.x > 0.5f)) {
+				temp[i].m_velocity.x = temp[i].m_velocity.x * (-1.0f);
+			}
+			if ((m_pRigidBodySystem->getRigidBodySystem()[i].m_boxCenter.y < -0.5f || m_pRigidBodySystem->getRigidBodySystem()[i].m_boxCenter.y > 0.5f)) {
+				temp[i].m_velocity.y = temp[i].m_velocity.y * (-1.0f);
+			}
+		}
+		
 		//v linear velocity
-		setVelocityOf(i, (temp[i].m_velocity + timeStep * temp[i].m_force / (m_pRigidBodySystem->getTotalMass())));
+		setVelocityOf(i, (temp[i].m_velocity + timeStep * temp[i].m_force / (m_pRigidBodySystem->getTotalMassOf(i))));
 		//r see page 58
-		Quat orient = temp[i].m_orientation + (timeStep / 2)* Quat(temp[i].m_angularVelocity.x, temp[i].m_angularVelocity.y, temp[i].m_angularVelocity.z, 1.0f) * temp[i].m_orientation;		setOrientationOf(i, (orient.unit()));
+		Quat orient = temp[i].m_orientation + (timeStep / 2)* Quat(temp[i].m_angularVelocity.x, temp[i].m_angularVelocity.y, temp[i].m_angularVelocity.z, 1.0f) * temp[i].m_orientation;
+		setOrientationOf(i, (orient.unit()));
 
 		//L angular momentum page 56		
 		m_pRigidBodySystem->setAngularMomentum(i, temp[i].m_angularMomentum + timeStep * temp[i].m_torque);
@@ -183,7 +246,6 @@ void RigidBodySystemSimulator::integrateEuler(float timeStep)
 
 		//calculate the inverse inertia tensor
 		temp[i].inertiaTensor = m_pRigidBodySystem->getRotMatOf(i) * temp[i].inertiaTensor * tr;
-
 		m_pRigidBodySystem->setAngularVelocity(i, temp[i].inertiaTensor.transformVector(temp[i].m_angularMomentum));
 
 		if (m_icountPrint > 0) {
@@ -197,8 +259,6 @@ void RigidBodySystemSimulator::integrateEuler(float timeStep)
 		}
 	}
 	//m_icountPrint != 0 ? --m_icountPrint : m_icountPrint;
-
-
 }
 
 void RigidBodySystemSimulator::setupDemo1()
@@ -225,11 +285,33 @@ void RigidBodySystemSimulator::setupDemo3()
 	addRigidBody(Vec3(0.5f, 0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.5f), 2);
 	addRigidBody(Vec3(-0.5f, -0.5f, 0.0f), Vec3(0.5f, 0.6f, 0.8f), 3);
 
-	// set xi and fi for torques		
-	//m_pRigidBodySystem->addTorque(0, Vec3(0.5f, 0.5f, 0.0f), Vec3(-1.0f, -1.0f, .0f));
-	//m_pRigidBodySystem->addTorque(1, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, .0f));
+	setOrientationOf(0, Quat(M_PI_2, 0, M_PI_2));
+	setOrientationOf(1, Quat(M_PI_2, M_PI_4, 0));
+
+	// set xi and fi for torques	
+	m_pRigidBodySystem->addRandomTorquesTo(0);
+	m_pRigidBodySystem->addRandomTorquesTo(1);
+}
+
+void RigidBodySystemSimulator::setupDemo4()
+{
+	this->m_pRigidBodySystem->reset();
+	interaction = true;
+
+	//erstelle neues setup mit vier rigidbodies
+	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(0.3f, 0.4f, 0.2f), 1);
+	addRigidBody(Vec3(-0.3f, -0.3f, -0.3f), Vec3(0.2f, 0.4f, 0.2f), 7);
+	addRigidBody(Vec3(0.2f, 0.1f, 0.25f), Vec3(0.1f, 0.3f, 0.2f), 4);
+	addRigidBody(Vec3(-0.4f, -0.4f, -0.2f), Vec3(0.2f, 0.2f, 0.2f), 3);
 
 	setOrientationOf(0, Quat(M_PI_2, 0, M_PI_2));
 	setOrientationOf(1, Quat(M_PI_2, M_PI_4, 0));
+	setOrientationOf(2, Quat(M_PI_4, 0, M_PI_2));
+	setOrientationOf(3, Quat(0, 0, 0));
+
+	m_pRigidBodySystem->addRandomTorquesTo(0);
+	m_pRigidBodySystem->addRandomTorquesTo(1);
+	m_pRigidBodySystem->addRandomTorquesTo(2);
+	m_pRigidBodySystem->addRandomTorquesTo(3);
 }
 

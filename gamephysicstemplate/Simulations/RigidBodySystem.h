@@ -19,7 +19,7 @@ struct Rigidbody {
 	int m_imass;
 	boolean fixed;
 	//hopefully inertia tensor
-	Mat4 inertiaTensor, inert;
+	Mat4 inertiaTensor;
 	//mass points producing torques -> m_torque is total torque
 	std::vector<TorqueChar> m_pointsTorque;
 };
@@ -32,7 +32,7 @@ public:
 	//Functions
 	std::vector<Rigidbody> getRigidBodySystem();
 	int getNumRigidBodies();
-	int getTotalMass();
+	int getTotalMassOf(int i);
 	void decNumRigidBodies();
 	void incNumRigidBodies();
 	void setTotalTorque(int i, Vec3 torque);
@@ -51,6 +51,8 @@ public:
 	Vec3 getXiOf(int i, int j);
 
 	void reset();
+	//deletes previous torques and sets new values
+	void addRandomTorquesTo(int i);
 
 private:
 	//Attributes

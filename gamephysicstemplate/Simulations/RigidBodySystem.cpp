@@ -16,9 +16,9 @@ int RigidBodySystem::getNumRigidBodies()
 	return this->m_iNumRigidBodies;
 }
 
-int RigidBodySystem::getTotalMass()
+int RigidBodySystem::getTotalMassOf(int i)
 {
-	return m_fTotalMass;
+	return this->m_rigidbodySystem[i].m_imass;
 }
 
 void RigidBodySystem::decNumRigidBodies()
@@ -69,8 +69,6 @@ void RigidBodySystem::setAngularMomentum(int i, Vec3 L)
 
 int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass, int z)
 {
-	this->m_fTotalMass += mass;
-
 	Rigidbody rigid;
 	rigid.m_boxCenter = position;
 	rigid.m_boxSize = size;
@@ -86,8 +84,6 @@ int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass, int z)
 	float Izy = mass * (-size.y*size.z);
 	rigid.inertiaTensor = XMMatrixSet(Ixx, Izy, Ixy, .0f, Izy, Iyy, Ixz, .0f, Ixy, Ixz, Izz, .0f, .0f, .0f, .0f, 1.0f);
 
-	rigid.inert = rigid.inertiaTensor.inverse();
-
 	//angular momantum L
 	rigid.m_angularMomentum = Vec3(.0f);
 
@@ -99,8 +95,6 @@ int RigidBodySystem::addRigidBody(Vec3 position, Vec3 size, int mass, int z)
 	c.xi = z * Vec3(0.3f, 0.5f, 0.25f);
 	c.fi = z * Vec3(1.0f, 1.0f, .0f);
 	rigid.m_pointsTorque.push_back(c);
-
-	z == 1 ? rigid.fixed = false : rigid.fixed = true;
 
 	m_rigidbodySystem.push_back(rigid);
 
@@ -141,5 +135,18 @@ void RigidBodySystem::reset()
 Mat4 RigidBodySystem::calcTransformMatrixOf(int i)
 {
 	return getScaleMatOf(i) * getRotMatOf(i) * getTranslatMatOf(i);
+}
+
+void RigidBodySystem::addRandomTorquesTo(int i)
+{
+	m_rigidbodySystem[i].m_pointsTorque.clear();
+
+	//add some random torques -> TODO: really random
+	TorqueChar c;
+	int z = m_rigidbodySystem[i].m_boxCenter.x < 0 ? 1 : -1;
+	c.xi = z * Vec3(0.2f, 0.2f, 0.0f);
+	c.fi = z * Vec3(2.0f, 2.0f, .0f);
+	m_rigidbodySystem[i].m_pointsTorque.push_back(c);
+	z == 1 ? m_rigidbodySystem[i].fixed = false : m_rigidbodySystem[i].fixed = true;
 }
 
