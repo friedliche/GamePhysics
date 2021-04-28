@@ -67,7 +67,7 @@ void SPHSystemSimulator::drawFrame(ID3D11DeviceContext * pd3dImmediateContext)
 		//Spheres
 		for (int i = 0; i < m_iNumSpheres; i++) {
 
-			DUC->setUpLighting(Vec3(), Vec3(1, 1, 0), 5.0f, Vec3(1, 0.5f, 0.65f));
+			DUC->setUpLighting(Vec3(), Vec3(1, 1, 0), 2000.0f, Vec3(1, 0.5f, 0.65f));
 			DUC->drawSphere(tmp[i].position, Vec3(0.05f, 0.05f, 0.05f));
 			//TODO: draw grid 
 		}
@@ -113,7 +113,7 @@ void SPHSystemSimulator::notifyCaseChanged(int testCase)
 void SPHSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 	//gravity
-	externalForce = Vec3(0, 9.81f, 0);
+	externalForce = Vec3(0, -9.81f, 0);
 }
 
 void SPHSystemSimulator::applyExternalForce(Vec3 force)

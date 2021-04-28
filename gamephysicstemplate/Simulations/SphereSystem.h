@@ -33,4 +33,5 @@ private:
 	int ylevel = 5;
 	//scaling factor (on y-axis)
 	int xLevel = 5;
+	int zLevel = 5;
 };
